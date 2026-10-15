@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Overview{% endblock %} · Climate Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% set p = request.path %}
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="{{ url_for('index') }}">
+      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></svg>
+      <span>Climate Intelligence</span>
+    </a>
+    <nav>
+      <a href="{{ url_for('index') }}"{% if p == '/' %} class="active"{% endif %}>Overview</a>
+      <a href="{{ url_for('monitoring') }}"{% if p.startswith('/monitoring') %} class="active"{% endif %}>Monitoring</a>
+      <a href="{{ url_for('prediction') }}"{% if p.startswith('/prediction') %} class="active"{% endif %}>Prediction</a>
+      <a href="{{ url_for('warnings') }}"{% if p.startswith('/warnings') %} class="active"{% endif %}>Early warning</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+{% block content %}{% endblock %}
+</main>
+
+<footer class="wrap footer">
+  <span>DBMS Mini Project · PostgreSQL · Flask</span>
+  <span>Risk levels are an academic classification, not official IMD heatwave declarations.</span>
+</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
