@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import risk_key, risk_label, val %}
+{% block title %}Monitoring{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">01 · Monitoring</p>
+    <h1>Weather observations</h1>
+    <p class="muted">Monitor weather conditions and heatwave risk, newest readings first.</p>
+  </div>
+</div>
+
+{% set total = stats.total or 0 %}
+<section class="stats">
+  <div class="tilt-scene"><div class="stat tilt"><div class="lift-sm">
+    <span class="stat-label">Total records</span><b>{{ "{:,}".format(total) }}</b>
+    <span class="stat-sub">across all stations</span>
+  </div></div></div>
+  <div class="tilt-scene"><div class="stat tilt accent"><div class="lift-sm">
+    <span class="stat-label">Average max</span><b>{{ val(stats.avg_max) }}<small>°C</small></b>
+    <span class="stat-sub">mean daily maximum</span>
+  </div></div></div>
+  <div class="tilt-scene"><div class="stat tilt high"><div class="lift-sm">
+    <span class="stat-label">High or above</span><b>{{ stats.high }}</b>
+    <span class="stat-sub">{{ "%.1f"|format(stats.high / total * 100) if total else 0 }}% of records · ≥ 41°C</span>
+  </div></div></div>
+  <div class="tilt-scene"><div class="stat tilt extreme"><div class="lift-sm">
+    <span class="stat-label">Extreme</span><b>{{ stats.extreme }}</b>
+    <span class="stat-sub">{{ "%.1f"|format(stats.extreme / total * 100) if total else 0 }}% of records · ≥ 44°C</span>
+  </div></div></div>
+</section>
+
+<form class="toolbar" method="get">
+  <label class="field grow">
+    <span>Weather station</span>
+    <select name="station">
+      <option value="">All stations</option>
+      {% for s in stations %}
+      <option value="{{ s.station_id }}"{% if selected_station|string == s.station_id|string %} selected{% endif %}>{{ s.station_name }} — {{ s.district }}, {{ s.state }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field narrow">
+    <span>Records</span>
+    <input type="number" name="limit" value="{{ request.args.get('limit', 25) }}" min="5" max="100">
+  </label>
+  <button class="btn" type="submit">Apply</button>
+  {% if selected_station %}<a class="btn ghost" href="{{ url_for('monitoring') }}">Clear</a>{% endif %}
+</form>
+
+<div class="table-card">
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Station</th><th class="num">Max °C</th><th class="heat-col"></th><th class="num">Avg</th><th class="num">Min</th><th class="num">Wind</th><th class="num">Rain</th><th>Risk</th></tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      {% set k = risk_key(r.max_temp) %}
+      <tr>
+        <td class="nowrap">{{ r.date_of_record.strftime('%d %b %Y') }}</td>
+        <td><div class="station">{{ r.station_name }}</div><div class="muted small">{{ r.district }}, {{ r.state }}</div></td>
+        <td class="num strong">{{ val(r.max_temp) }}</td>
+        <td class="heat-col">
+          {% if r.max_temp is not none %}
+          {% set w = (r.max_temp|float - 15) / 35 * 100 %}
+          <div class="heatbar"><span class="{{ k }}" style="width: {{ [[w, 3]|max, 100]|min|round }}%"></span></div>
+          {% endif %}
+        </td>
+        <td class="num">{{ val(r.avg_temp) }}</td>
+        <td class="num">{{ val(r.min_temp) }}</td>
+        <td class="num">{{ val(r.wind_speed) }}</td>
+        <td class="num">{{ val(r.rainfall) }}</td>
+        <td><span class="badge {{ k }}">{{ risk_label(r.max_temp) }}</span></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="muted">No observations found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
