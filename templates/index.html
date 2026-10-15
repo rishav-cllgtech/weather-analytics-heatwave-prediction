@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import scale %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Heatwave monitoring, prediction &amp; early warning</p>
+    <h1>Know when the heat turns <span class="hot">dangerous.</span></h1>
+    <p class="lede">Daily weather from {{ stats.stations }} stations across India, stored in PostgreSQL and turned into risk levels you can browse, predict and act on.</p>
+    <div class="hero-actions">
+      <a class="btn accent" href="{{ url_for('monitoring') }}">Open monitoring</a>
+      <a class="btn ghost" href="{{ url_for('prediction') }}">Try a prediction</a>
+    </div>
+  </div>
+  <div class="globe-card">
+    <span class="scene-label">Peak max temperature by station</span>
+    <div id="scene3d" aria-label="3D bar map of weather stations by peak temperature"></div>
+    <div class="scene-tip"></div>
+    <div class="scene-fallback">Loading 3D view…</div>
+    <span class="scene-hint">Drag to rotate · hover a bar</span>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="tilt-scene"><div class="stat tilt accent"><div class="lift-sm">
+    <span class="stat-label">Observations</span><b>{{ "{:,}".format(stats.total) }}</b>
+    <span class="stat-sub">{{ stats.first_year }} – {{ stats.last_year }}</span>
+  </div></div></div>
+  <div class="tilt-scene"><div class="stat tilt"><div class="lift-sm">
+    <span class="stat-label">Stations</span><b>{{ stats.stations }}</b>
+    <span class="stat-sub">across Indian states</span>
+  </div></div></div>
+  <div class="tilt-scene"><div class="stat tilt high"><div class="lift-sm">
+    <span class="stat-label">High or above</span><b>{{ stats.high }}</b>
+    <span class="stat-sub">days ≥ 41°C</span>
+  </div></div></div>
+  <div class="tilt-scene"><div class="stat tilt extreme"><div class="lift-sm">
+    <span class="stat-label">Hottest day</span>
+    {% if hottest %}
+    <b>{{ "%.1f"|format(hottest.max_temp|float) }}<small>°C</small></b>
+    <span class="stat-sub">{{ hottest.station_name }} · {{ hottest.date_of_record.strftime('%b %Y') }}</span>
+    {% else %}<b>—</b><span class="stat-sub">no data</span>{% endif %}
+  </div></div></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div><h2>Risk scale</h2><p class="muted">Every observation is classified by its maximum temperature.</p></div>
+  </div>
+  {{ scale() }}
+</section>
+
+<section class="modules">
+  <div class="tilt-scene"><a class="module tilt" href="{{ url_for('monitoring') }}"><div class="lift"><span class="module-num">01</span><h3>Monitoring</h3><p>Browse recorded observations by station, with counts of high and extreme days.</p><span class="arrow">Explore →</span></div></a></div>
+  <div class="tilt-scene"><a class="module tilt" href="{{ url_for('prediction') }}"><div class="lift"><span class="module-num">02</span><h3>Prediction</h3><p>Enter conditions and a Random Forest model estimates the heatwave-risk level.</p><span class="arrow">Predict →</span></div></a></div>
+  <div class="tilt-scene"><a class="module tilt" href="{{ url_for('warnings') }}"><div class="lift"><span class="module-num">03</span><h3>Early warning</h3><p>The hottest recorded days for each risk level, with an advisory for each.</p><span class="arrow">View warnings →</span></div></a></div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><h2>How it works</h2></div>
+  <ol class="pipeline">
+    <li><b>Dataset</b><span>{{ "{:,}".format(stats.total) }} daily observations, CSV</span></li>
+    <li><b>PostgreSQL</b><span>stations &amp; observations tables</span></li>
+    <li><b>Flask</b><span>SQL queries per page</span></li>
+    <li><b>Model</b><span>Random Forest risk classifier</span></li>
+  </ol>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>window.STATIONS = {{ stations|tojson }};</script>
+<script src="{{ url_for('static', filename='vendor/three.min.js') }}"></script>
+<script src="{{ url_for('static', filename='scene3d.js') }}"></script>
+{% endblock %}
