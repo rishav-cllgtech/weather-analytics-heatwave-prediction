@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_macros.html" import scale %}
+{% block title %}Prediction{% endblock %}
+{% block content %}
+{% set f = request.form %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">02 · Prediction</p>
+    <h1>Estimate heatwave risk</h1>
+    <p class="muted">Enter the day's conditions. A Random Forest trained on the project dataset returns a risk level.</p>
+  </div>
+</div>
+
+<div class="predict-layout">
+  <form class="panel form" method="post">
+    <fieldset>
+      <legend>Temperature</legend>
+      <div class="grid-3">
+        <label class="field"><span>Maximum °C</span><input name="max_temp" type="number" step="0.1" required value="{{ f.get('max_temp', '') }}" placeholder="e.g. 42.5"></label>
+        <label class="field"><span>Average °C</span><input name="avg_temp" type="number" step="0.1" required value="{{ f.get('avg_temp', '') }}" placeholder="e.g. 33.0"></label>
+        <label class="field"><span>Minimum °C</span><input name="min_temp" type="number" step="0.1" required value="{{ f.get('min_temp', '') }}" placeholder="e.g. 26.0"></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Atmosphere</legend>
+      <div class="grid-3">
+        <label class="field"><span>Wind speed</span><input name="wind_speed" type="number" step="0.1" value="{{ f.get('wind_speed', '10') }}"></label>
+        <label class="field"><span>Air pressure (hPa)</span><input name="air_pressure" type="number" step="0.1" value="{{ f.get('air_pressure', '1010') }}"></label>
+        <label class="field"><span>Rainfall (mm)</span><input name="rainfall" type="number" step="0.1" value="{{ f.get('rainfall', '0') }}"></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Season</legend>
+      {% set months = ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+      {% set chosen = f.get('month', '5') %}
+      <label class="field"><span>Month</span>
+        <select name="month">
+          {% for m in months %}
+          <option value="{{ loop.index }}"{% if chosen|string == loop.index|string %} selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </fieldset>
+    <button class="btn accent wide" type="submit">Predict risk</button>
+  </form>
+
+  {% set k = result|lower if result else '' %}
+  {% set t = f.get('max_temp', '')|float(0) %}
+  <aside class="result-col tilt-scene">
+    <section class="panel result tilt {{ k }}" data-tilt="5">
+      <span class="eyebrow">Predicted risk</span>
+      <h2 class="result-level">{{ result if result else 'Awaiting input' }}</h2>
+      <div class="thermo-wrap">
+        <div class="thermo" aria-hidden="true">
+          <div class="thermo-tube"><div class="thermo-fill" style="height: {{ ([[(t - 20) / 30 * 100, 4]|max, 100]|min if result else 0)|round }}%"></div></div>
+          <div class="thermo-bulb"></div>
+          <div class="thermo-ticks"><span>50°</span><span>40°</span><span>30°</span><span>20°</span></div>
+        </div>
+      </div>
+      <div class="confidence">
+        <div class="confidence-row"><span>Model confidence</span><b>{{ "%.1f"|format(probability) ~ '%' if probability else '—' }}</b></div>
+        <div class="meter"><span style="width: {{ probability|round if probability else 0 }}%"></span></div>
+      </div>
+      <p class="advice">
+        {% if not result %}Fill in the conditions and press <b>Predict risk</b>.
+        {% elif result in ['High', 'Extreme'] %}Early warning recommended for these conditions. Limit outdoor exposure and stay hydrated.
+        {% elif result == 'Moderate' %}Monitor the location closely and review the early-warning page.
+        {% else %}No heatwave warning is indicated by the model.{% endif %}
+      </p>
+      {{ scale(k) }}
+    </section>
+  </aside>
+</div>
+{% endblock %}
