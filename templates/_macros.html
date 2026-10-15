@@ -1,0 +1,19 @@
+{# Risk helpers: same thresholds as heatwave_level() in app.py #}
+{% macro risk_key(t) -%}
+{%- if t is none -%}none{%- elif t >= 44 -%}extreme{%- elif t >= 41 -%}high{%- elif t >= 38 -%}moderate{%- else -%}normal{%- endif -%}
+{%- endmacro %}
+
+{% macro risk_label(t) -%}
+{%- if t is none -%}Unknown{%- elif t >= 44 -%}Extreme{%- elif t >= 41 -%}High{%- elif t >= 38 -%}Moderate{%- else -%}Normal{%- endif -%}
+{%- endmacro %}
+
+{% macro scale(active='') %}
+<div class="scale" id="scale">
+  <div class="scale-seg normal{{ ' on' if active == 'normal' }}"><b>Normal</b><span>&lt; 38°C</span></div>
+  <div class="scale-seg moderate{{ ' on' if active == 'moderate' }}"><b>Moderate</b><span>38–40.9°C</span></div>
+  <div class="scale-seg high{{ ' on' if active == 'high' }}"><b>High</b><span>41–43.9°C</span></div>
+  <div class="scale-seg extreme{{ ' on' if active == 'extreme' }}"><b>Extreme</b><span>≥ 44°C</span></div>
+</div>
+{% endmacro %}
+
+{% macro val(v) -%}{{ v if v is not none else '—' }}{%- endmacro %}
