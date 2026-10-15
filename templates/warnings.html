@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Early warning{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">03 · Early warning</p>
+    <h1>Heatwave alerts</h1>
+    <p class="muted">The hottest recorded days for each risk level, based on the project's temperature thresholds.</p>
+  </div>
+</div>
+
+{% set n_ext = rows|selectattr('risk', 'equalto', 'Extreme')|list|length %}
+{% set n_high = rows|selectattr('risk', 'equalto', 'High')|list|length %}
+{% set n_mod = rows|selectattr('risk', 'equalto', 'Moderate')|list|length %}
+<div class="chips" role="group" aria-label="Filter by risk">
+  <button class="chip on" data-filter="all">All <b>{{ rows|length }}</b></button>
+  <button class="chip" data-filter="extreme">Extreme <b>{{ n_ext }}</b></button>
+  <button class="chip" data-filter="high">High <b>{{ n_high }}</b></button>
+  <button class="chip" data-filter="moderate">Moderate <b>{{ n_mod }}</b></button>
+</div>
+
+{% set ns = namespace(last='', n=0) %}
+<div class="warning-grid">
+{% for r in rows %}
+  {% set k = r.risk|lower %}
+  {% if r.risk != ns.last %}{% set ns.last = r.risk %}{% set ns.n = 0 %}{% endif %}
+  {% set ns.n = ns.n + 1 %}
+  <div class="tilt-scene" data-risk="{{ k }}"><article class="warning tilt {{ k }}">
+    <div class="lift-sm">
+      <div class="warning-top">
+        <span class="badge {{ k }}">{% if k == 'extreme' %}Extreme alert{% elif k == 'high' %}High alert{% else %}Moderate monitoring{% endif %}</span>
+        <span class="rank">#{{ ns.n }}</span>
+      </div>
+      <div class="warning-temp">{{ "%.1f"|format(r.max_temp|float) }}<small>°C</small></div>
+      <h3>{{ r.station_name }}</h3>
+      <p class="muted small" style="margin:2px 0 0">{{ r.district }}, {{ r.state }} · {{ r.date_of_record.strftime('%d %b %Y') }}</p>
+      <p class="advisory">
+        {% if k == 'extreme' %}Immediate heat-safety precautions are recommended.
+        {% elif k == 'high' %}Avoid prolonged heat exposure and stay hydrated.
+        {% else %}Monitor the temperature and stay informed about conditions.{% endif %}
+      </p>
+    </div>
+  </article></div>
+{% else %}
+  <p class="muted">No warning records found.</p>
+{% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.chip').forEach(function (chip) {
+  chip.addEventListener('click', function () {
+    document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('on'); });
+    chip.classList.add('on');
+    var f = chip.dataset.filter;
+    document.querySelectorAll('.warning-grid > [data-risk]').forEach(function (card) {
+      card.hidden = !(f === 'all' || card.dataset.risk === f);
+    });
+  });
+});
+</script>
+{% endblock %}
